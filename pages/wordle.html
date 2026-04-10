@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wordle</title>
+  <link rel="stylesheet" href="../assets/wordle.css" />
+</head>
+<body>
+  <div class="page-wrap">
+    <nav class="nav-bar">
+      <a class="nav-link" href="../index.html">Back to Homepage</a>
+      <a class="nav-link" href="pages/scratch.html">To BYU Football</a>
+    </nav>
+
+    <section class="hero">
+      <h1>Wordle</h1>
+      <p>
+        Guess the five-letter word in six tries and let the brain games begin.
+      </p>
+    </section>
+
+    <main class="game-card">
+      <div class="info-row">
+        <div>
+          <h2 class="game-title">How to Play</h2>
+          <p class="subtext">
+            Type a five-letter word. Green means correct spot, gold means the letter is in the word but not correct spot,
+            and gray means the letter is not in the word.
+          </p>
+        </div>
+        <button class="action-btn" id="newGameBtn">New Game</button>
+      </div>
+
+      <div class="status" id="statusMessage">Start guessing. You have 6 tries.</div>
+
+      <section class="board" id="board"></section>
+
+      <section class="keyboard" id="keyboard">
+        <div class="keyboard-row" id="row1"></div>
+        <div class="keyboard-row" id="row2"></div>
+        <div class="keyboard-row" id="row3"></div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const ANSWER_WORDS = [
+      "eagle", "storm", "glory", "quest", "smile", "flame", "crown", "brave",
+      "river", "stone", "vivid", "light", "pride", "train", "shout", "march",
+      "score", "blend", "grape", "tiger", "sweep", "climb", "bloom", "drift"
+    ];
+
+    const EXTRA_ALLOWED_WORDS = [
+      "abide", "about", "abuse", "actor", "acute", "adieu", "admit", "adopt",
+      "adore", "after", "again", "agent", "agree", "ahead", "alarm", "album",
+      "alert", "alike", "alive", "allow", "alone", "along", "alter", "angel",
+      "angle", "angry", "apart", "apple", "apply", "arena", "argue", "arise",
+      "array", "aside", "asset", "audio", "audit", "avoid", "award", "aware",
+      "badly", "baker", "bases", "basic", "beach", "began", "begin", "begun",
+      "being", "below", "bench", "birth", "black", "blame", "blind", "block",
+      "blood", "board", "boost", "booth", "bound", "brain", "brand", "bread",
+      "break", "breed", "brief", "bring", "broad", "broke", "brown", "build",
+      "built", "buyer", "cable", "calif", "carry", "catch", "cause", "chain",
+      "chair", "chart", "chase", "cheap", "check", "chest", "chief", "child",
+      "china", "chose", "civil", "claim", "class", "clean", "clear", "click",
+      "clock", "close", "coach", "coast", "could", "count", "court", "cover",
+      "craft", "crane", "cream", "crime", "cross", "crowd", "crown", "curve",
+      "cycle", "daily", "dance", "dated", "dealt", "death", "debut", "delay",
+      "depth", "doing", "doubt", "dozen", "draft", "drama", "drawn", "dream",
+      "dress", "drill", "drink", "drive", "drove", "dying", "eager", "early",
+      "earth", "eight", "elite", "empty", "enemy", "enjoy", "enter", "entry",
+      "equal", "error", "event", "every", "exact", "exist", "extra", "faith",
+      "false", "fault", "fiber", "field", "fifth", "fifty", "fight", "final",
+      "first", "fixed", "flash", "fleet", "floor", "fluid", "focus", "force",
+      "forth", "forty", "forum", "found", "frame", "frank", "fraud", "fresh",
+      "front", "fruit", "fully", "funny", "giant", "given", "glass", "globe",
+      "going", "grace", "grade", "grand", "grant", "grass", "great", "green",
+      "gross", "group", "grown", "guard", "guess", "guest", "guide", "happy",
+      "harry", "heart", "heavy", "hence", "henry", "horse", "hotel", "house",
+      "human", "ideal", "image", "index", "inner", "input", "issue", "japan",
+      "jimmy", "joint", "jones", "judge", "known", "label", "large", "laser",
+      "later", "laugh", "layer", "learn", "lease", "least", "leave", "legal",
+      "level", "lewis", "light", "limit", "links", "lives", "local", "logic",
+      "loose", "lower", "lucky", "lunch", "lying", "magic", "major", "maker",
+      "march", "maria", "match", "maybe", "mayor", "meant", "media", "metal",
+      "might", "minor", "minus", "mixed", "model", "money", "month", "moral",
+      "motor", "mount", "mouse", "mouth", "movie", "music", "needs", "never",
+      "newly", "night", "noise", "north", "noted", "novel", "nurse", "occur",
+      "ocean", "offer", "often", "order", "other", "ought", "paint", "panel",
+      "paper", "party", "peace", "peter", "phase", "phone", "photo", "piece",
+      "pilot", "pitch", "place", "plain", "plane", "plant", "plate", "point",
+      "pound", "power", "press", "price", "pride", "prime", "print", "prior",
+      "prize", "proof", "proud", "prove", "queen", "quick", "quiet", "quite",
+      "radio", "raise", "range", "rapid", "ratio", "reach", "ready", "refer",
+      "right", "rival", "river", "robin", "roger", "roman", "rough", "round",
+      "route", "royal", "rural", "scale", "scene", "scope", "score", "sense",
+      "serve", "seven", "shall", "shape", "share", "sharp", "sheet", "shelf",
+      "shell", "shift", "shine", "shirt", "shock", "shoot", "short", "shown",
+      "sight", "since", "sixth", "sixty", "sized", "skill", "sleep", "slide",
+      "small", "smart", "smile", "smith", "smoke", "solid", "solve", "sorry",
+      "sound", "south", "space", "spare", "speak", "speed", "spend", "spent",
+      "split", "spoke", "sport", "staff", "stage", "stake", "stand", "start",
+      "state", "steam", "steel", "stick", "still", "stock", "stone", "stood",
+      "store", "storm", "story", "strip", "stuck", "study", "stuff", "style",
+      "sugar", "suite", "super", "sweet", "table", "taken", "taste", "taxes",
+      "teach", "teeth", "terry", "texas", "thank", "theft", "their", "theme",
+      "there", "these", "thick", "thing", "think", "third", "those", "three",
+      "throw", "tight", "times", "tired", "title", "today", "topic", "total",
+      "touch", "tough", "tower", "track", "trade", "train", "treat", "trend",
+      "trial", "tried", "tries", "truck", "truly", "trust", "truth", "twice",
+      "under", "union", "unity", "until", "upper", "upset", "urban", "usage",
+      "usual", "valid", "value", "video", "virus", "visit", "vital", "voice",
+      "waste", "watch", "water", "wheel", "where", "which", "while", "white",
+      "whole", "whose", "woman", "women", "world", "worry", "worse", "worst",
+      "worth", "would", "write", "wrong", "wrote", "yield", "young", "youth"
+    ];
+
+    const ALLOWED_WORDS = new Set(
+      [...ANSWER_WORDS, ...EXTRA_ALLOWED_WORDS].map(word => word.toLowerCase())
+    );
+
+    const INVALID_WORDS = new Set();
+
+    const boardElement = document.getElementById("board");
+    const statusMessage = document.getElementById("statusMessage");
+    const newGameBtn = document.getElementById("newGameBtn");
+
+    const keyboardRows = {
+      row1: "qwertyuiop".split(""),
+      row2: "asdfghjkl".split(""),
+      row3: ["Enter", ..."zxcvbnm".split(""), "Back"]
+    };
+
+    let answer = "";
+    let currentRow = 0;
+    let currentCol = 0;
+    let guesses = Array.from({ length: 6 }, () => Array(5).fill(""));
+    let gameOver = false;
+    let isCheckingWord = false;
+
+    function chooseAnswer() {
+      return ANSWER_WORDS[Math.floor(Math.random() * ANSWER_WORDS.length)];
+    }
+
+    function buildBoard() {
+      boardElement.innerHTML = "";
+      for (let r = 0; r < 6; r++) {
+        const row = document.createElement("div");
+        row.className = "board-row";
+        for (let c = 0; c < 5; c++) {
+          const tile = document.createElement("div");
+          tile.className = "tile";
+          tile.id = `tile-${r}-${c}`;
+          row.appendChild(tile);
+        }
+        boardElement.appendChild(row);
+      }
+    }
+
+    function buildKeyboard() {
+      Object.entries(keyboardRows).forEach(([rowId, keys]) => {
+        const rowElement = document.getElementById(rowId);
+        rowElement.innerHTML = "";
+
+        keys.forEach((keyLabel) => {
+          const key = document.createElement("button");
+          key.className = "key";
+
+          if (keyLabel === "Enter" || keyLabel === "Back") {
+            key.classList.add("wide");
+          }
+
+          key.textContent = keyLabel === "Back" ? "⌫" : keyLabel;
+          key.dataset.key = keyLabel;
+          key.addEventListener("click", () => handleKeyPress(keyLabel));
+          rowElement.appendChild(key);
+        });
+      });
+    }
+
+    function resetKeyboardColors() {
+      document.querySelectorAll(".key").forEach((key) => {
+        key.classList.remove("correct", "present", "absent");
+      });
+    }
+
+    function setStatus(message) {
+      statusMessage.textContent = message;
+    }
+
+    function updateBoard() {
+      for (let r = 0; r < 6; r++) {
+        for (let c = 0; c < 5; c++) {
+          const tile = document.getElementById(`tile-${r}-${c}`);
+          const letter = guesses[r][c];
+          tile.textContent = letter;
+          tile.classList.toggle("filled", letter !== "");
+        }
+      }
+    }
+
+    function handleKeyPress(key) {
+      if (gameOver || isCheckingWord) return;
+
+      if (key === "Back") {
+        if (currentCol > 0) {
+          currentCol--;
+          guesses[currentRow][currentCol] = "";
+          updateBoard();
+        }
+        return;
+      }
+
+      if (key === "Enter") {
+        submitGuess();
+        return;
+      }
+
+      if (/^[a-zA-Z]$/.test(key) && currentCol < 5) {
+        guesses[currentRow][currentCol] = key.toLowerCase();
+        currentCol++;
+        updateBoard();
+      }
+    }
+
+    function colorPriority(className) {
+      if (className === "correct") return 3;
+      if (className === "present") return 2;
+      if (className === "absent") return 1;
+      return 0;
+    }
+
+    function updateKeyboard(letter, className) {
+      const key = document.querySelector(`.key[data-key="${letter}"]`);
+      if (!key) return;
+
+      const currentClasses = ["correct", "present", "absent"];
+      const existing = currentClasses.find((cls) => key.classList.contains(cls));
+
+      if (!existing || colorPriority(className) > colorPriority(existing)) {
+        currentClasses.forEach((cls) => key.classList.remove(cls));
+        key.classList.add(className);
+      }
+    }
+
+    function evaluateGuess(guess, answerWord) {
+      const result = Array(5).fill("absent");
+      const answerLetters = answerWord.split("");
+      const guessLetters = guess.split("");
+
+      for (let i = 0; i < 5; i++) {
+        if (guessLetters[i] === answerLetters[i]) {
+          result[i] = "correct";
+          answerLetters[i] = null;
+          guessLetters[i] = null;
+        }
+      }
+
+      for (let i = 0; i < 5; i++) {
+        if (guessLetters[i] && answerLetters.includes(guessLetters[i])) {
+          result[i] = "present";
+          answerLetters[answerLetters.indexOf(guessLetters[i])] = null;
+        }
+      }
+
+      return result;
+    }
+
+    async function checkWordOnline(word) {
+      try {
+        const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+
+        if (!response.ok) {
+          INVALID_WORDS.add(word);
+          return false;
+        }
+
+        const data = await response.json();
+
+        if (Array.isArray(data) && data.length > 0) {
+          ALLOWED_WORDS.add(word);
+          return true;
+        }
+
+        INVALID_WORDS.add(word);
+        return false;
+      } catch (error) {
+        return null;
+      }
+    }
+
+    async function submitGuess() {
+      if (currentCol < 5) {
+        setStatus("You need a full five-letter word.");
+        return;
+      }
+
+      const guess = guesses[currentRow].join("");
+
+      if (!ALLOWED_WORDS.has(guess)) {
+        if (INVALID_WORDS.has(guess)) {
+          setStatus("That word is not in the game dictionary.");
+          return;
+        }
+
+        isCheckingWord = true;
+        setStatus("Checking dictionary...");
+
+        const onlineCheck = await checkWordOnline(guess);
+        isCheckingWord = false;
+
+        if (onlineCheck === false) {
+          setStatus("That word is not in the game dictionary.");
+          return;
+        }
+
+        if (onlineCheck === null) {
+          setStatus("Could not verify that word online. Try again.");
+          return;
+        }
+      }
+
+      const evaluation = evaluateGuess(guess, answer);
+
+      for (let i = 0; i < 5; i++) {
+        const tile = document.getElementById(`tile-${currentRow}-${i}`);
+        tile.classList.add(evaluation[i]);
+        updateKeyboard(guess[i], evaluation[i]);
+      }
+
+      if (guess === answer) {
+        gameOver = true;
+        setStatus(`You got it! The word was ${answer.toUpperCase()}. Nicely done.`);
+        return;
+      }
+
+      currentRow++;
+      currentCol = 0;
+
+      if (currentRow === 6) {
+        gameOver = true;
+        setStatus(`Out of tries. The word was ${answer.toUpperCase()}. Hit New Game to try again.`);
+      } else {
+        setStatus(`Guess ${currentRow + 1} of 6. Keep cooking.`);
+      }
+    }
+
+    function startGame() {
+      answer = chooseAnswer();
+      currentRow = 0;
+      currentCol = 0;
+      guesses = Array.from({ length: 6 }, () => Array(5).fill(""));
+      gameOver = false;
+      isCheckingWord = false;
+      buildBoard();
+      resetKeyboardColors();
+      setStatus("Start guessing. You have 6 tries.");
+      updateBoard();
+    }
+
+    document.addEventListener("keydown", (event) => {
+      if (gameOver || isCheckingWord) {
+        return;
+      }
+
+      if (event.key === "Backspace") {
+        handleKeyPress("Back");
+      } else if (event.key === "Enter") {
+        handleKeyPress("Enter");
+      } else if (/^[a-zA-Z]$/.test(event.key)) {
+        handleKeyPress(event.key.toLowerCase());
+      }
+    });
+
+    newGameBtn.addEventListener("click", startGame);
+
+    buildKeyboard();
+    startGame();
+  </script>
+</body>
+</html>
